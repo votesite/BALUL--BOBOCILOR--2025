@@ -100,7 +100,7 @@
 <h1>Votează pentru cea mai bună alegere!</h1>
 
 <div id="timer" style="font-size: 2em; color: #ff6600; margin: 20px 0;">
-    Timp rămas: <span id="timp">--</span> secunde
+    Timp rămas: <span id="timp">--:--:--</span>
 </div>
 
 <div id="startSection" style="display: none;">
@@ -188,7 +188,12 @@
         const elapsed = Math.floor((now - startTime) / 1000);
         const remaining = Math.max(0, duration - elapsed);
 
-        document.getElementById('timp').textContent = remaining;
+        // Format ore:minute:secunde
+        const hours = Math.floor(remaining / 3600);
+        const minutes = Math.floor((remaining % 3600) / 60);
+        const seconds = remaining % 60;
+        const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        document.getElementById('timp').textContent = timeString;
         document.getElementById('startSection').style.display = 'none';
 
         if (remaining > 0) {
@@ -221,11 +226,12 @@
                 const now = Date.now();
                 const elapsed = Math.floor((now - startTime) / 1000);
                 const remaining = Math.max(0, duration - elapsed);
-                document.getElementById('timp').textContent = remaining;
-
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
+                
+                const hours = Math.floor(remaining / 3600);
+                const minutes = Math.floor((remaining % 3600) / 60);
+                const seconds = remaining % 60;
+                const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('timp').textContent =
                     votareActiva = false;
 
                     voturiRef.once('value').then((snapshot) => {
