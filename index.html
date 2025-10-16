@@ -121,7 +121,7 @@
 <div id="startSection" style="display: none;">
     <button id="startBtn" onclick="startVotare()">🚀 PORNEȘTE VOTAREA (2 ore)</button>
     <p style="color: #666;">Doar organizatorul apasă acest buton!</p>
-    <button id="resetBtn" onclick="resetVotare()" style="background: #dc3545; color: white; border: none; padding: 15px 30px; font-size: 1.1em; border-radius: 10px; cursor: pointer; margin-top: 10px; transition: 0.3s;">🔄 RESETEAZĂ TOTUL</button>
+    <button id="resetBtn" onclick="resetVotare()">🔄 RESETEAZĂ TOTUL</button>
     <p style="color: #999; font-size: 0.9em;">⚠️ Acest buton șterge toate voturile și resetează timer-ul!</p>
 </div>
 
@@ -140,8 +140,8 @@
 <p id="rezultat" class="loading">Se conectează la server...</p>
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
     // Configurația Firebase
@@ -155,8 +155,15 @@
         appId: "1:280980878187:web:87076554df6abec00cd22e"
     };
 
-    // Inițializare Firebase
-    firebase.initializeApp(firebaseConfig);
+    // Inițializare Firebase cu mai multe detalii de debug
+    try {
+        firebase.initializeApp(firebaseConfig);
+        console.log('🔥 Firebase inițializat cu succes!');
+    } catch (error) {
+        console.error('❌ Eroare la inițializarea Firebase:', error);
+        document.getElementById('rezultat').innerHTML = '❌ Eroare la conectarea cu Firebase!';
+    }
+
     const database = firebase.database();
     const voturiRef = database.ref('voturi');
     const timerRef = database.ref('timer');
@@ -165,16 +172,18 @@
     let aVotat = localStorage.getItem('aVotat') === 'true';
     let timerInterval = null;
 
-    // Verifică conexiunea Firebase
+    // Verifică conexiunea Firebase cu mai multe detalii
     database.ref('.info/connected').on('value', (snapshot) => {
         if (snapshot.val() === true) {
             console.log('✅ Conectat la Firebase!');
-            if (!aVotat && votareActiva) {
-                document.getElementById('rezultat').innerHTML = 'Votarea este în curs...';
+            if (!aVotat && !votareActiva) {
+                document.getElementById('rezultat').innerHTML = '✅ Conectat la server! Așteptăm să înceapă votarea...';
+            } else if (!aVotat && votareActiva) {
+                document.getElementById('rezultat').innerHTML = '🗳️ Votarea este în curs... Alege-ți echipa preferată!';
             }
         } else {
             console.log('❌ Deconectat de la Firebase');
-            document.getElementById('rezultat').innerHTML = '⚠️ Eroare de conexiune la server...';
+            document.getElementById('rezultat').innerHTML = '⚠️ Nu se poate conecta la server... Verifică internetul!';
         }
     });
 
@@ -248,7 +257,11 @@
                 const minutes = Math.floor((remaining % 3600) / 60);
                 const seconds = remaining % 60;
                 const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                document.getElementById('timp').textContent =
+                document.getElementById('timp').textContent = timeString;
+
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
                     votareActiva = false;
 
                     voturiRef.once('value').then((snapshot) => {
@@ -278,7 +291,7 @@
         optiuni.forEach(opt => {
             opt.style.opacity = '0.5';
             opt.style.cursor = 'not-allowed';
-            opt.style.pointerEvents = 'none';
+            opt.onclick = null;
         });
     }
 
@@ -444,6 +457,7 @@
         optiuni.forEach(opt => {
             opt.style.opacity = '0.5';
             opt.style.cursor = 'not-allowed';
+            opt.onclick = null;
         });
     }
 </script>
