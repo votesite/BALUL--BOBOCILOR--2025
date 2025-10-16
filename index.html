@@ -94,6 +94,21 @@
             background: #ff8533;
             transform: scale(1.05);
         }
+        #resetBtn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        #resetBtn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -106,6 +121,8 @@
 <div id="startSection" style="display: none;">
     <button id="startBtn" onclick="startVotare()">🚀 PORNEȘTE VOTAREA (2 ore)</button>
     <p style="color: #666;">Doar organizatorul apasă acest buton!</p>
+    <button id="resetBtn" onclick="resetVotare()" style="background: #dc3545; color: white; border: none; padding: 15px 30px; font-size: 1.1em; border-radius: 10px; cursor: pointer; margin-top: 10px; transition: 0.3s;">🔄 RESETEAZĂ TOTUL</button>
+    <p style="color: #999; font-size: 0.9em;">⚠️ Acest buton șterge toate voturile și resetează timer-ul!</p>
 </div>
 
 <div class="optiune" onclick="vote('Mușat Mădălina+Mușat Gelu')">Mușat Mădălina+Mușat Gelu</div>
@@ -167,7 +184,7 @@
 
         if (!timerData || !timerData.startTime) {
             // Nu s-a început votarea încă
-            document.getElementById('timp').textContent = '--';
+            document.getElementById('timp').textContent = '--:--:--';
             document.getElementById('startSection').style.display = 'block';
             document.getElementById('rezultat').innerHTML = '⏸️ Așteptăm să înceapă votarea...';
             votareActiva = false;
@@ -287,6 +304,38 @@
             console.error('❌ Eroare la pornirea votării:', error);
             alert('Eroare! Verifică conexiunea la internet.');
         });
+    }
+
+    // Funcție pentru resetarea completă a votării (doar organizatorul)
+    function resetVotare() {
+        const confirmare = confirm('⚠️ ATENȚIE! Această acțiune va șterge:\n\n✗ Toate voturile\n✗ Timer-ul\n✗ Toată istoria\n\nEști absolut sigur?');
+        if (!confirmare) return;
+
+        const confirmare2 = confirm('Ultima confirmare! Vrei cu adevărat să ștergi totul?');
+        if (!confirmare2) return;
+
+        // Șterge toate voturile
+        voturiRef.remove().then(() => {
+            console.log('✅ Voturile au fost șterse!');
+        }).catch((error) => {
+            console.error('❌ Eroare la ștergerea voturilor:', error);
+        });
+
+        // Șterge timer-ul
+        timerRef.remove().then(() => {
+            console.log('✅ Timer-ul a fost resetat!');
+        }).catch((error) => {
+            console.error('❌ Eroare la ștergerea timer-ului:', error);
+        });
+
+        // Resetează localStorage local
+        localStorage.removeItem('aVotat');
+        
+        alert('✅ Totul a fost resetat! Pagina se va reîncărca.');
+        
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     }
 
     function vote(pereche) {
