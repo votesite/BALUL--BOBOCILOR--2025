@@ -56,23 +56,6 @@
             background: #ffd700;
         }
 
-        #owner-login-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid white;
-            padding: 10px 20px;
-            font-size: 1em;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-        }
-
-        #owner-login-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -289,8 +272,8 @@
 <div id="welcome-screen">
     <h1>🎉 Bun venit la Balul Bobocilor! 🎉</h1>
     <button id="welcome-btn">Intră la Votare</button>
-    <br>
-    <button id="owner-login-btn">🔑 Login Organizator</button>
+    <br><br>
+    <button id="owner-login-btn" >🔑 Login Organizator</button>
 </div>
 
 <!-- Aplicația principală -->
@@ -338,7 +321,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // PAROLA PENTRU ORGANIZATOR - Schimbă-o aici! 🔐
+    // PAROLA PENTRU ORGANIZATOR - Schimbă-o aici! 
     const PAROLA_ORGANIZATOR = "kd90af6gj7mk";
 
     let esteOrganizator = localStorage.getItem('esteOrganizator') === 'true';
@@ -356,12 +339,19 @@
             welcomeScreen.classList.add('hidden');
             mainApp.classList.remove('hidden');
 
-            // Dacă este organizator, arată badge-ul ȘI panoul de control
-            if (esteOrganizator) {
+            // Verifică dacă localStorage are statutul de organizator
+            const isOrganizator = localStorage.getItem('esteOrganizator') === 'true';
+
+            // DOAR dacă este organizator, arată badge-ul ȘI panoul de control
+            if (isOrganizator) {
+                esteOrganizator = true;
                 document.getElementById('adminBadge').classList.remove('hidden');
                 document.getElementById('adminControls').classList.remove('hidden');
                 console.log('✅ Panou organizator activat!');
             } else {
+                // Asigură-te că panoul este ascuns pentru utilizatori normali
+                document.getElementById('adminBadge').classList.add('hidden');
+                document.getElementById('adminControls').classList.add('hidden');
                 console.log('👤 Utilizator normal - panou ascuns');
             }
 
@@ -407,14 +397,6 @@
             console.log('✅ Event listener atașat pe butonul de bun venit!');
         }
 
-        const ownerLoginBtn = document.getElementById('owner-login-btn');
-        if (ownerLoginBtn) {
-            ownerLoginBtn.addEventListener('click', loginAsOwner);
-            console.log('✅ Event listener atașat pe butonul de login organizator!');
-        } else {
-            console.log('⚠️ Butonul owner-login-btn nu a fost găsit!');
-        }
-
         const startBtn = document.getElementById('startBtn');
         if (startBtn) {
             startBtn.addEventListener('click', startVotare);
@@ -455,6 +437,29 @@
     let votareActiva = false;
     let aVotat = localStorage.getItem('aVotat') === 'true';
     let timerInterval = null;
+
+    // Funcție pentru logare ca organizator
+    function loginAsOwner() {
+        const parola = prompt('🔐 Introdu parola de organizator:');
+
+        if (parola === null) {
+            return; // Utilizatorul a anulat
+        }
+
+        if (parola !== PAROLA_ORGANIZATOR) {
+            alert('❌ Parolă incorectă!');
+            return;
+        }
+
+        // Salvează statutul de organizator
+        esteOrganizator = true;
+        localStorage.setItem('esteOrganizator', 'true');
+        
+        alert('✅ Logare reușită! Bun venit, Organizator!');
+        
+        // Pornește aplicația
+        startApp();
+    }
 
     // Funcție pentru a atașa event listeners pe butoane
     function ataseazaEventListeners() {
@@ -508,7 +513,7 @@
             document.getElementById('timp').textContent = '--:--:--';
             document.getElementById('rezultat').innerHTML = '⏸️ Așteptăm să înceapă votarea...';
             votareActiva = false;
-            dezactiveazaButoane();
+            dezactiveazaButoanele();
             return;
         }
 
@@ -529,10 +534,10 @@
 
             if (!aVotat) {
                 document.getElementById('rezultat').innerHTML = '🗳️ Votarea este în curs... Alege-ți echipa preferată!';
-                activeazaButoane();
+                activeazaButoanele();
             } else {
                 document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
-                dezactiveazaButoane();
+                dezactiveazaButoanele();
             }
 
             if (timerInterval) {
@@ -595,7 +600,7 @@
 
     if (aVotat) {
         document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
-        dezactiveazaButoane();
+        dezactiveazaButoanele();
     }
 
     // Ascultă schimbările în voturi în timp real
@@ -608,7 +613,7 @@
 
     // Funcție pentru verificarea parolei și pornirea votării
     function startVotare() {
-        console.log('🚀 startVotare() apelată!');
+        console.log('🎬 startVotare() apelată!');
 
         // ÎNTOTDEAUNA cere parola
         const parola = prompt('🔐 Introdu parola de organizator:');
@@ -666,7 +671,6 @@
             esteOrganizator = true;
             localStorage.setItem('esteOrganizator', 'true');
             document.getElementById('adminBadge').classList.remove('hidden');
-            document.getElementById('adminControls').classList.remove('hidden');
         }
 
         const confirmare = confirm('⚠️ ATENȚIE! Această acțiune va șterge:\n\n✗ Toate voturile\n✗ Timer-ul\n✗ Toată istoria\n\nEști absolut sigur?');
@@ -719,7 +723,7 @@
             localStorage.setItem('aVotat', 'true');
 
             document.getElementById('rezultat').innerHTML = '✅ Votul tău a fost înregistrat cu succes!<br>Nu mai poți vota din nou.';
-            dezactiveazaButoane();
+            dezactiveazaButoanele();
         }).catch((error) => {
             console.error('❌ Eroare la salvarea votului:', error);
             alert('Eroare la înregistrarea votului. Încearcă din nou!');
@@ -731,7 +735,7 @@
         const buton = document.getElementById('maiMultBtn');
         if (restul.style.display === 'none' || restul.style.display === '') {
             restul.style.display = 'block';
-            buton.textContent = '🔼 Ascunde detaliile';
+            buton.textContent = '📊 Ascunde detaliile';
         } else {
             restul.style.display = 'none';
             buton.textContent = '📊 Vezi toate echipele';
@@ -747,12 +751,12 @@
 
         const sortate = Object.entries(voturiOriginale).sort((a, b) => b[1] - a[1]);
 
-        let text = '<h2 style="color: red;">🏁 VOTAREA S-A ÎNCHEIAT! 🏁</h2><br>';
+        let text = '<h2 style="color: red;">🔴 VOTAREA S-A ÎNCHEIAT! 🔴</h2><br>';
         text += '<h2>🏆 TOP 3 ECHIPE 🏆</h2><br>';
 
         if (sortate.length >= 1 && sortate[0][1] > 0) {
             text += `<div class="podium loc1">
-                   🥇 LOCUL 1<br>
+                  🥇 LOCUL 1<br>
                   <strong>${sortate[0][0]}</strong><br>
                   ${sortate[0][1]} voturi
                  </div><br>`;
@@ -760,7 +764,7 @@
 
         if (sortate.length >= 2 && sortate[1][1] > 0) {
             text += `<div class="podium loc2">
-                   🥈 LOCUL 2<br>
+                  🥈 LOCUL 2<br>
                   <strong>${sortate[1][0]}</strong><br>
                   ${sortate[1][1]} voturi
                  </div><br>`;
@@ -768,7 +772,7 @@
 
         if (sortate.length >= 3 && sortate[2][1] > 0) {
             text += `<div class="podium loc3">
-                   🥉 LOCUL 3<br>
+                  🥉 LOCUL 3<br>
                   <strong>${sortate[2][0]}</strong><br>
                   ${sortate[2][1]} voturi
                  </div><br>`;
@@ -791,7 +795,7 @@
 
         document.getElementById('rezultat').innerHTML = text;
         document.getElementById('timer').innerHTML = '<span style="color: red;">⏰ Timpul a expirat!</span>';
-        dezactiveazaButoane();
+        dezactiveazaButoanele();
     }
 </script>
 </body>
