@@ -539,7 +539,7 @@
             document.getElementById('timp').textContent = '--:--:--';
             document.getElementById('rezultat').innerHTML = '⏸️ Așteptăm să înceapă votarea...';
             votareActiva = false;
-            dezactiveazaButoane();
+            dezactiveazaButoanele();
             return;
         }
 
@@ -560,10 +560,10 @@
 
             if (!aVotat) {
                 document.getElementById('rezultat').innerHTML = '🗳️ Votarea este în curs... Alege-ți echipa preferată!';
-                activeazaButoane();
+                activeazaButoanele();
             } else {
                 document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
-                dezactiveazaButoane();
+                dezactiveazaButoanele();
             }
 
             if (timerInterval) {
@@ -626,7 +626,7 @@
 
     if (aVotat) {
         document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
-        dezactiveazaButoane();
+        dezactiveazaButoanele();
     }
 
     // Ascultă schimbările în voturi în timp real
@@ -715,7 +715,7 @@
             document.getElementById('timp').textContent = '--:--:--';
             document.getElementById('rezultat').innerHTML = '⏸️ Timer resetat. Așteptăm să înceapă o nouă votare...';
             votareActiva = false;
-            dezactiveazaButoane();
+            dezactiveazaButoanele();
         }).catch((error) => {
             console.error('❌ Eroare la resetarea timer-ului:', error);
             alert('❌ Eroare la resetarea timer-ului! Verifică conexiunea.');
@@ -746,27 +746,31 @@
             document.getElementById('adminControls').classList.remove('hidden');
         }
 
-        const confirmare = confirm('⚠️ ATENȚIE! Această acțiune va șterge:\n\n✗ Toate voturile\n✗ Timer-ul\n✗ Toată istoria\n\nEști absolut sigur?');
+        const confirmare = confirm('⚠️ ATENȚIE! Această acțiune va șterge:\n\n✗ Toate voturile\n✗ Timer-ul\n✗ Toată istoria\n✗ Toți utilizatorii vor putea vota din nou\n\nEști absolut sigur?');
         if (!confirmare) return;
 
         const confirmare2 = confirm('Ultima confirmare! Vrei cu adevărat să ștergi totul?');
         if (!confirmare2) return;
 
+        // Șterge voturile din Firebase
         voturiRef.remove().then(() => {
             console.log('✅ Voturile au fost șterse!');
         }).catch((error) => {
             console.error('❌ Eroare la ștergerea voturilor:', error);
         });
 
+        // Șterge timer-ul din Firebase
         timerRef.remove().then(() => {
             console.log('✅ Timer-ul a fost resetat!');
         }).catch((error) => {
             console.error('❌ Eroare la ștergerea timer-ului:', error);
         });
 
+        // Șterge statutul de vot din localStorage - acum utilizatorii pot vota din nou!
         localStorage.removeItem('aVotat');
+        aVotat = false;
 
-        alert('✅ Totul a fost resetat! Pagina se va reîncărca.');
+        alert('✅ Totul a fost resetat! Toți utilizatorii pot vota din nou. Pagina se va reîncărca.');
 
         setTimeout(() => {
             location.reload();
@@ -796,7 +800,7 @@
             localStorage.setItem('aVotat', 'true');
 
             document.getElementById('rezultat').innerHTML = '✅ Votul tău a fost înregistrat cu succes!<br>Nu mai poți vota din nou.';
-            dezactiveazaButoane();
+            dezactiveazaButoanele();
         }).catch((error) => {
             console.error('❌ Eroare la salvarea votului:', error);
             alert('Eroare la înregistrarea votului. Încearcă din nou!');
@@ -822,54 +826,36 @@
             voturiOriginale[numeOriginal] = voturi[key];
         }
 
-        const sortate = Object.entries(voturiOriginale).sort((a, b) => b[1] - a[1]);
-
-        let text = '<h2 style="color: red;">🏁 VOTAREA S-A ÎNCHEIAT! 🏁</h2><br>';
-        text += '<h2>🏆 TOP 3 ECHIPE 🏆</h2><br>';
-
-        if (sortate.length >= 1 && sortate[0][1] > 0) {
-            text += `<div class="podium loc1">
-                   🥇 LOCUL 1<br>
-                  <strong>${sortate[0][0]}</strong><br>
-                  ${sortate[0][1]} voturi
-                 </div><br>`;
+        const entries = Object.entries(voturiOriginale);
+        if (entries.length === 0) {
+            document.getElementById('rezultat').innerHTML = 'ℹ️ Nu există încă voturi înregistrate.';
+            dezactiveazaButoanele();
+            return;
         }
 
-        if (sortate.length >= 2 && sortate[1][1] > 0) {
-            text += `<div class="podium loc2">
-                   🥈 LOCUL 2<br>
-                  <strong>${sortate[1][0]}</strong><br>
-                  ${sortate[1][1]} voturi
-                 </div><br>`;
-        }
+        entries.sort((a, b) => (b[1] || 0) - (a[1] || 0));
 
-        if (sortate.length >= 3 && sortate[2][1] > 0) {
-            text += `<div class="podium loc3">
-                   🥉 LOCUL 3<br>
-                  <strong>${sortate[2][0]}</strong><br>
-                  ${sortate[2][1]} voturi
-                 </div><br>`;
-        }
+        const maxVoturi = entries[0][1] || 0;
+        const castigatori = entries.filter(e => (e[1] || 0) === maxVoturi).map(e => e[0]);
 
-        if (sortate.length === 0 || sortate[0][1] === 0) {
-            text += '<h3>Nu au fost înregistrate voturi.</h3>';
-        }
+        const textCastigator = castigatori.length > 1
+            ? `🏆 Câștigători (egalitate) cu ${maxVoturi} voturi: <strong>${castigatori.join(', ')}</strong>`
+            : `🏆 Câștigător cu ${maxVoturi} voturi: <strong>${castigatori[0]}</strong>`;
 
-        if (sortate.length > 3) {
-            text += '<br><button id="maiMultBtn" onclick="arataRestul()">📊 Vezi toate echipele</button>';
-            text += '<div id="restulEchipelor"><h3>Toate echipele:</h3>';
-            for (let i = 0; i < sortate.length; i++) {
-                text += `<p style="text-align: left; padding: 5px; border-bottom: 1px solid #ddd;">
-                    <strong>${i + 1}.</strong> ${sortate[i][0]} - <strong>${sortate[i][1]}</strong> voturi
-                   </p>`;
-            }
-            text += '</div>';
-        }
+        const clasamentDetaliat = entries.map((e, idx) => {
+            const nume = e[0];
+            const count = e[1] || 0;
+            return `<div style="margin:4px 0; text-align:left;">${idx + 1}. ${nume} — <strong>${count}</strong> voturi</div>`;
+        }).join('');
 
-        document.getElementById('rezultat').innerHTML = text;
-        document.getElementById('timer').innerHTML = '<span style="color: red;">⏰ Timpul a expirat!</span>';
-        dezactiveazaButoane();
+        document.getElementById('rezultat').innerHTML =
+            `✅ Votarea s-a încheiat!<br>${textCastigator}<br><br>
+             <button id="maiMultBtn" onclick="arataRestul()">📊 Vezi toate echipele</button>
+             <div id="restulEchipelor" style="display:none; margin-top:10px;">${clasamentDetaliat}</div>`;
+
+        dezactiveazaButoanele();
     }
+
 </script>
 </body>
 </html>
