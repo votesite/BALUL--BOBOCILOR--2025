@@ -11,7 +11,7 @@
             padding: 40px;
             margin: 0;
         }
-        
+
         /* Ecran de bun venit */
         #welcome-screen {
             position: fixed;
@@ -27,7 +27,7 @@
             z-index: 10000;
             animation: fadeIn 1s ease-in;
         }
-        
+
         #welcome-screen h1 {
             color: white;
             font-size: 4em;
@@ -35,7 +35,7 @@
             margin-bottom: 50px;
             animation: slideDown 1s ease-out;
         }
-        
+
         #welcome-btn {
             background: white;
             color: #667eea;
@@ -49,54 +49,54 @@
             font-weight: bold;
             animation: slideUp 1s ease-out;
         }
-        
+
         #welcome-btn:hover {
             transform: scale(1.1) translateY(-5px);
             box-shadow: 0 15px 40px rgba(0,0,0,0.4);
             background: #ffd700;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        
+
         @keyframes fadeOut {
             from { opacity: 1; }
             to { opacity: 0; }
         }
-        
+
         @keyframes slideDown {
-            from { 
+            from {
                 opacity: 0;
                 transform: translateY(-100px);
             }
-            to { 
+            to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         @keyframes slideUp {
-            from { 
+            from {
                 opacity: 0;
                 transform: translateY(100px);
             }
-            to { 
+            to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         .hidden {
             display: none !important;
         }
-        
+
         /* Restul stilurilor */
         #main-app {
             animation: fadeIn 0.5s ease-in;
         }
-        
+
         h1 {
             color: #333;
         }
@@ -243,7 +243,7 @@
             color: red !important;
             font-size: 3em !important;
         }
-        
+
         .admin-badge {
             display: inline-block;
             background: #ffd700;
@@ -255,7 +255,7 @@
             margin-left: 10px;
             box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
         }
-        
+
         #adminControls {
             background: rgba(255, 255, 255, 0.9);
             padding: 20px;
@@ -272,6 +272,10 @@
 <div id="welcome-screen">
     <h1>🎉 Bun venit la Balul Bobocilor! 🎉</h1>
     <button id="welcome-btn">Intră la Votare</button>
+    <br><br>
+    <button id="owner-login-btn" onclick="loginAsOwner()" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid white; padding: 10px 20px; font-size: 1em; border-radius: 25px; cursor: pointer;">
+        🔑 Login Organizator
+    </button>
 </div>
 
 <!-- Aplicația principală -->
@@ -319,9 +323,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // PAROLA PENTRU ORGANIZATOR - Schimbă-o aici! 🔐
+    // PAROLA PENTRU ORGANIZATOR - Schimbă-o aici! 
     const PAROLA_ORGANIZATOR = "kd90af6gj7mk";
-    
+
     let esteOrganizator = localStorage.getItem('esteOrganizator') === 'true';
 
     // Funcție pentru a porni aplicația
@@ -329,39 +333,67 @@
         console.log('🚀 startApp() a fost apelată!');
         const welcomeScreen = document.getElementById('welcome-screen');
         const mainApp = document.getElementById('main-app');
-        
+
         // Animație de dispariție pentru ecranul de bun venit
         welcomeScreen.style.animation = 'fadeOut 0.5s ease-out';
-        
+
         setTimeout(() => {
             welcomeScreen.classList.add('hidden');
             mainApp.classList.remove('hidden');
-            
+
             // Dacă este organizator, arată badge-ul
             if (esteOrganizator) {
                 document.getElementById('adminBadge').classList.remove('hidden');
             }
-            
+
             console.log('✅ Tranziția completă!');
         }, 500);
+    }
+
+    // Funcție pentru logare ca organizator
+    function loginAsOwner() {
+        console.log('🔑 loginAsOwner() a fost apelată!');
+        
+        const parola = prompt('🔐 Introdu parola de organizator:');
+
+        if (parola === null) {
+            console.log('❌ Utilizatorul a anulat');
+            return; // Utilizatorul a anulat
+        }
+
+        if (parola !== PAROLA_ORGANIZATOR) {
+            alert('❌ Parolă incorectă!');
+            console.log('❌ Parolă incorectă introdusă');
+            return;
+        }
+
+        // Salvează statutul de organizator
+        esteOrganizator = true;
+        localStorage.setItem('esteOrganizator', 'true');
+        
+        alert('✅ Logare reușită! Bun venit, Organizator!');
+        console.log('✅ Logare reușită ca organizator!');
+        
+        // Pornește aplicația
+        startApp();
     }
 
     // Atașăm event listener după ce DOM-ul e încărcat
     document.addEventListener('DOMContentLoaded', function() {
         console.log('📄 DOM încărcat!');
-        
+
         const welcomeBtn = document.getElementById('welcome-btn');
         if (welcomeBtn) {
             welcomeBtn.addEventListener('click', startApp);
             console.log('✅ Event listener atașat pe butonul de bun venit!');
         }
-        
+
         const startBtn = document.getElementById('startBtn');
         if (startBtn) {
             startBtn.addEventListener('click', startVotare);
             console.log('✅ Event listener atașat pe butonul de start!');
         }
-        
+
         const resetBtn = document.getElementById('resetBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', resetVotare);
@@ -396,6 +428,29 @@
     let votareActiva = false;
     let aVotat = localStorage.getItem('aVotat') === 'true';
     let timerInterval = null;
+
+    // Funcție pentru logare ca organizator
+    function loginAsOwner() {
+        const parola = prompt('🔐 Introdu parola de organizator:');
+
+        if (parola === null) {
+            return; // Utilizatorul a anulat
+        }
+
+        if (parola !== PAROLA_ORGANIZATOR) {
+            alert('❌ Parolă incorectă!');
+            return;
+        }
+
+        // Salvează statutul de organizator
+        esteOrganizator = true;
+        localStorage.setItem('esteOrganizator', 'true');
+        
+        alert('✅ Logare reușită! Bun venit, Organizator!');
+        
+        // Pornește aplicația
+        startApp();
+    }
 
     // Funcție pentru a atașa event listeners pe butoane
     function ataseazaEventListeners() {
@@ -479,12 +534,12 @@
             if (timerInterval) {
                 clearInterval(timerInterval);
             }
-            
+
             timerInterval = setInterval(() => {
                 const now = Date.now();
                 const elapsed = Math.floor((now - startTime) / 1000);
                 const remaining = Math.max(0, duration - elapsed);
-                
+
                 const hours = Math.floor(remaining / 3600);
                 const minutes = Math.floor((remaining % 3600) / 60);
                 const seconds = remaining % 60;
@@ -495,7 +550,7 @@
                     const overlay = document.getElementById('countdown-overlay');
                     const countdownNumber = document.getElementById('countdown-number');
                     const timerDisplay = document.getElementById('timp');
-                    
+
                     overlay.style.display = 'flex';
                     countdownNumber.textContent = remaining;
                     timerDisplay.classList.add('final-countdown');
@@ -510,7 +565,7 @@
                     clearInterval(timerInterval);
                     timerInterval = null;
                     votareActiva = false;
-                    
+
                     document.getElementById('countdown-overlay').style.display = 'none';
                     document.getElementById('timp').classList.remove('final-countdown');
 
@@ -550,26 +605,26 @@
     // Funcție pentru verificarea parolei și pornirea votării
     function startVotare() {
         console.log('🎬 startVotare() apelată!');
-        
+
         // ÎNTOTDEAUNA cere parola
         const parola = prompt('🔐 Introdu parola de organizator:');
-        
+
         if (parola === null) {
             return; // Utilizatorul a anulat
         }
-        
+
         if (parola !== PAROLA_ORGANIZATOR) {
             alert('❌ Parolă incorectă! Doar organizatorul poate porni votarea.');
             return;
         }
-        
+
         // Salvează statutul de organizator
         if (!esteOrganizator) {
             esteOrganizator = true;
             localStorage.setItem('esteOrganizator', 'true');
             document.getElementById('adminBadge').classList.remove('hidden');
         }
-        
+
         const confirmare = confirm('Sigur vrei să pornești votarea? Toată lumea va vedea timer-ul pornind!');
         if (!confirmare) return;
 
@@ -588,26 +643,26 @@
     // Funcție pentru resetarea completă a votării
     function resetVotare() {
         console.log('🔄 resetVotare() apelată!');
-        
+
         // ÎNTOTDEAUNA cere parola
         const parola = prompt('🔐 Introdu parola de organizator:');
-        
+
         if (parola === null) {
             return;
         }
-        
+
         if (parola !== PAROLA_ORGANIZATOR) {
             alert('❌ Parolă incorectă! Doar organizatorul poate reseta votarea.');
             return;
         }
-        
+
         // Salvează statutul de organizator
         if (!esteOrganizator) {
             esteOrganizator = true;
             localStorage.setItem('esteOrganizator', 'true');
             document.getElementById('adminBadge').classList.remove('hidden');
         }
-        
+
         const confirmare = confirm('⚠️ ATENȚIE! Această acțiune va șterge:\n\n✗ Toate voturile\n✗ Timer-ul\n✗ Toată istoria\n\nEști absolut sigur?');
         if (!confirmare) return;
 
@@ -627,9 +682,9 @@
         });
 
         localStorage.removeItem('aVotat');
-        
+
         alert('✅ Totul a fost resetat! Pagina se va reîncărca.');
-        
+
         setTimeout(() => {
             location.reload();
         }, 1000);
@@ -653,7 +708,7 @@
             return (currentValue || 0) + 1;
         }).then(() => {
             console.log('✅ Vot salvat în Firebase!');
-            
+
             aVotat = true;
             localStorage.setItem('aVotat', 'true');
 
