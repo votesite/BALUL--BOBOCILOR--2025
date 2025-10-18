@@ -492,6 +492,7 @@
     const database = firebase.database();
     const voturiRef = database.ref('voturi');
     const timerRef = database.ref('timer');
+    const sessionRef = database.ref('session');
 
     // server time offset (ms) to approximate authoritative server time on clients
     const offsetRef = database.ref('.info/serverTimeOffset');
@@ -499,6 +500,33 @@
     offsetRef.on('value', (snap) => {
         serverTimeOffset = snap.val() || 0;
         console.log('\u23f1\ufe0f Server time offset (ms):', serverTimeOffset);
+    });
+
+    // Session handling: when session changes, allow clients to vote again by clearing local flags
+    let currentSession = null;
+    sessionRef.on('value', (snap) => {
+        const session = snap.val();
+        if (!session) return;
+        // if same session, nothing to do
+        if (String(currentSession) === String(session)) return;
+        console.log('\u2139\ufe0f Session changed:', session);
+        currentSession = session;
+        window.currentSession = session;
+
+        const votedSession = localStorage.getItem('votedSession');
+        if (!votedSession || String(votedSession) !== String(session)) {
+            // new session -> clear vote flag so users can vote again
+            localStorage.removeItem('aVotat');
+            localStorage.removeItem('votedSession');
+            aVotat = false;
+            console.log('\u2705 Session reset locally, users can vote again');
+        }
+        else {
+            // votedSession matches current session -> keep user blocked locally
+            aVotat = true;
+            localStorage.setItem('aVotat', 'true');
+            console.log('\u2139\ufe0f User has already voted in this session (local)');
+        }
     });
 
     let votareActiva = false;
@@ -767,12 +795,18 @@
         const confirmare = confirm('Sigur vrei să pornești votarea? Toată lumea va vedea timer-ul pornind!');
         if (!confirmare) return;
 
-        // Use Firebase server timestamp to ensure all clients have a common reference
-        timerRef.set({
+        // Create a new session and set timer; using server timestamp for consistency
+        const updates = {
             startTime: firebase.database.ServerValue.TIMESTAMP,
             duration: 7200
-        }).then(() => {
-            console.log('✅ Votarea a început!');
+        };
+        // write timer and session atomically (session set to server timestamp)
+        const newSession = firebase.database.ServerValue.TIMESTAMP;
+        Promise.all([
+            sessionRef.set(newSession),
+            timerRef.set(updates)
+        ]).then(() => {
+            console.log('✅ Votarea a început! Session and timer set');
             alert('✅ Votarea a început! Timer-ul pornește acum.');
         }).catch((error) => {
             console.error('❌ Eroare la pornirea votării:', error);
@@ -870,6 +904,13 @@
             console.error('❌ Eroare la ștergerea timer-ului:', error);
         });
 
+        // Emit a new session token so all clients clear their local voted flags
+        sessionRef.set(firebase.database.ServerValue.TIMESTAMP).then(() => {
+            console.log('✅ Session token updated after reset');
+        }).catch((err) => {
+            console.error('❌ Could not update session token:', err);
+        });
+
         // Șterge statutul de vot din localStorage - acum utilizatorii pot vota din nou!
         localStorage.removeItem('aVotat');
         aVotat = false;
@@ -905,12 +946,14 @@
             return (currentValue || 0) + 1;
         }).then(() => {
             console.log('✅ Vot salvat în Firebase!');
-
             aVotat = true;
             localStorage.setItem('aVotat', 'true');
+            // record which session the user voted in
+            const sess = window.currentSession || Date.now();
+            localStorage.setItem('votedSession', sess);
 
             document.getElementById('rezultat').innerHTML = '✅ Votul tău a fost înregistrat cu succes!<br>Nu mai poți vota din nou.';
-            dezactiveazaButoanele();
+            if (typeof dezactiveazaButoanele === 'function') dezactiveazaButoanele();
         }).catch((error) => {
             console.error('❌ Eroare la salvarea votului:', error);
             alert('Eroare la înregistrarea votului. Încearcă din nou!');
