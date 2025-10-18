@@ -447,6 +447,12 @@
             } catch (e) { /* ignore if elements missing */ }
             alert('Autentificare locală reușită!');
             console.log('🔐 Autentificare locală organizator OK');
+            // Ensure the main app is shown and admin panel is visible immediately
+            try {
+                startApp();
+            } catch (e) {
+                console.warn('Could not call startApp immediately:', e);
+            }
             return Promise.resolve();
         } else {
             alert('Parolă incorectă. Dacă dorești să setezi o parolă locală, rulează în consolă:\nlocalStorage.setItem("ownerPassword","PAROLA_TA")');
