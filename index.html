@@ -427,7 +427,9 @@
     // localStorage.setItem('ownerPassword','kd90af6gj7mk') sau folosește valoarea implicită 'kd90af6gj7mk'.
     function loginAsOwner() {
         console.log('🔑 loginAsOwner() called - using local password check');
-        signInOwnerPrompt();
+        signInOwnerPrompt().catch(err => {
+            console.warn('loginAsOwner failed/canceled:', err);
+        });
     }
 
     function signInOwnerPrompt() {
@@ -465,7 +467,13 @@
 
         const ownerLoginBtn = document.getElementById('owner-login-btn');
         if (ownerLoginBtn) {
-            ownerLoginBtn.addEventListener('click', signInOwnerPrompt);
+            // Use a wrapper so any Promise rejection inside signInOwnerPrompt is caught
+            ownerLoginBtn.addEventListener('click', () => {
+                signInOwnerPrompt().catch(err => {
+                    // suppressed to avoid uncaught promise in console; log for debugging
+                    console.warn('Login organizator canceled/failed:', err);
+                });
+            });
             console.log('✅ Event listener atașat pe butonul de login organizator!');
         } else {
             console.log('⚠️ Butonul owner-login-btn nu a fost găsit!');
