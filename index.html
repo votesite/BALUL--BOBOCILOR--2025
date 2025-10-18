@@ -490,15 +490,20 @@
 
     // Funcție pentru a atașa event listeners pe butoane
     function ataseazaEventListeners() {
+        console.log('🔄 Atașare event listeners...');
         const optiuni = document.querySelectorAll('.optiune');
         optiuni.forEach(opt => {
             const pereche = opt.getAttribute('data-pereche');
-            opt.onclick = function() { vote(pereche); };
+            // Adăugăm onclick direct în HTML pentru compatibilitate maximă
+            opt.setAttribute('onclick', `vote('${pereche}')`);
+            console.log(`✅ Event listener atașat pentru: ${pereche}`);
         });
+        console.log('✅ Event listeners atașate pe', optiuni.length, 'opțiuni!');
     }
 
     // Funcție pentru a activa butoanele
     function activeazaButoane() {
+        console.log('🔄 Activare butoane...');
         const optiuni = document.querySelectorAll('.optiune');
         optiuni.forEach(opt => {
             opt.style.opacity = '1';
@@ -506,6 +511,7 @@
             opt.style.pointerEvents = 'auto';
         });
         ataseazaEventListeners();
+        console.log('✅ Butoane activate!');
     }
 
     // Funcție pentru a dezactiva butoanele
@@ -536,7 +542,9 @@
 
     // Ascultă timer-ul din Firebase
     timerRef.on('value', (snapshot) => {
+        console.log('🕒 Actualizare timer din Firebase');
         const timerData = snapshot.val();
+        console.log('🕒 Date timer:', timerData);
 
         if (!timerData || !timerData.startTime) {
             document.getElementById('timp').textContent = '--:--:--';
@@ -571,12 +579,15 @@
 
             if (timerInterval) {
                 clearInterval(timerInterval);
+                timerInterval = null;
             }
 
+            console.log('🕒 Pornire interval timer local');
             timerInterval = setInterval(() => {
                 const now = Date.now();
                 const elapsed = Math.floor((now - startTime) / 1000);
                 const remaining = Math.max(0, duration - elapsed);
+                console.log('⏱️ Timp rămas (secunde):', remaining);
 
                 const hours = Math.floor(remaining / 3600);
                 const minutes = Math.floor((remaining % 3600) / 60);
@@ -780,17 +791,23 @@
         }, 1000);
     }
 
-    function vote(pereche) {
+    // Funcție globală pentru votare
+    window.vote = function(pereche) {
+        console.log('🗳️ Funcția vote() a fost apelată pentru:', pereche);
+        
         if (!votareActiva) {
             alert('⏰ Votarea nu este activă! Așteaptă să înceapă.');
+            console.log('❌ Votare inactivă');
             return;
         }
 
         if (aVotat) {
             alert('⚠️ Ai votat deja! Poți vota doar o singură dată!');
+            console.log('❌ Utilizatorul a votat deja');
             return;
         }
 
+        console.log('✅ Procesare vot pentru:', pereche);
         const perecheKey = pereche.replace(/[.#$[\]]/g, '_');
         const perecheRef = database.ref('voturi/' + perecheKey);
 
@@ -824,11 +841,13 @@
     }
 
     function afiseazaCastigatorFinal(voturi) {
+        console.log('🏆 Afișare câștigător final...');
         const voturiOriginale = {};
         for (let key in voturi) {
             const numeOriginal = key.replace(/_/g, '+');
             voturiOriginale[numeOriginal] = voturi[key];
         }
+        console.log('📊 Voturi procesate:', voturiOriginale);
 
         const entries = Object.entries(voturiOriginale);
         if (entries.length === 0) {
