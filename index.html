@@ -534,9 +534,27 @@
             } else if (!aVotat && votareActiva) {
                 document.getElementById('rezultat').innerHTML = '🗳️ Votarea este în curs... Alege-ți echipa preferată!';
             }
+            // Ascunde butonul de reconectare dacă există
+            const reconnectBtn = document.getElementById('reconnectBtn');
+            if (reconnectBtn) {
+                reconnectBtn.style.display = 'none';
+            }
         } else {
             console.log('❌ Deconectat de la Firebase');
-            document.getElementById('rezultat').innerHTML = '⚠️ Nu se poate conecta la server... Verifică internetul!';
+            document.getElementById('rezultat').innerHTML = '⚠️ Nu se poate conecta la server... Verifică internetul! <button id="reconnectBtn" style="margin-top: 10px; padding: 8px 15px; background: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 Reconectare</button>';
+            
+            // Adaugă event listener pentru butonul de reconectare
+            setTimeout(() => {
+                const reconnectBtn = document.getElementById('reconnectBtn');
+                if (reconnectBtn) {
+                    reconnectBtn.addEventListener('click', function() {
+                        console.log('🔄 Încercare de reconectare...');
+                        document.getElementById('rezultat').innerHTML = '🔄 Reconectare în curs...';
+                        // Reîncarcă pagina pentru a reiniția conexiunea Firebase
+                        location.reload();
+                    });
+                }
+            }, 100);
         }
     });
 
