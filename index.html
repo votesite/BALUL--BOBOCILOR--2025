@@ -309,7 +309,6 @@
     <br>
         <button id="owner-login-btn">🔑 Login Organizator</button>
             <!-- inline auth removed; use Login Organizator button (prompt-based) -->
-            <div style="color:#fff; margin-top:8px; font-size:0.9em; opacity:0.9;">Parolă locală implicită: <strong style="color:#ffd700">admin</strong>. Schimbă cu <code>localStorage.setItem('ownerPassword','PAROLA_TA')</code></div>
 </div>
 
 <!-- Aplicația principală -->
@@ -424,8 +423,8 @@
     }
 
     // Funcție pentru logare ca organizator (local, fără Firebase Auth)
-    // Păstrăm o rută simplă: parola organizator poate fi setată în console cu
-    // localStorage.setItem('ownerPassword','PAROLA_TA') sau folosește valoarea implicită 'admin'.
+    // Păstrăm o rută simplă: parola organizator poate fi setată în consolă cu
+    // localStorage.setItem('ownerPassword','kd90af6gj7mk') sau folosește valoarea implicită 'kd90af6gj7mk'.
     function loginAsOwner() {
         console.log('🔑 loginAsOwner() called - using local password check');
         signInOwnerPrompt();
@@ -436,7 +435,7 @@
         const password = prompt('Introdu parola organizator (local, fără Firebase):');
         if (password === null) return Promise.reject('cancelled');
 
-        const ownerPassword = localStorage.getItem('ownerPassword') || 'admin';
+    const ownerPassword = localStorage.getItem('ownerPassword') || 'kd90af6gj7mk';
         if (password === ownerPassword) {
             localStorage.setItem('esteOrganizator', 'true');
             esteOrganizator = true;
