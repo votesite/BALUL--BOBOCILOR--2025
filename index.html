@@ -543,6 +543,17 @@
         });
     }
 
+    // backward-compatible aliases (some older parts of the app used different names)
+    try {
+        if (typeof window !== 'undefined') {
+            // alias old names to new functions to avoid ReferenceError from cached scripts
+            window.activeazaButoane = window.activeazaButoane || activeazaButoanele;
+            window.dezactiveazaButoane = window.dezactiveazaButoane || dezactiveazaButoanele;
+        }
+    } catch (e) {
+        console.warn('Could not set function aliases for compatibility', e);
+    }
+
     // Verifică conexiunea Firebase
     database.ref('.info/connected').on('value', (snapshot) => {
         if (snapshot.val() === true) {
@@ -592,7 +603,11 @@
             document.getElementById('timp').textContent = '--:--:--';
             document.getElementById('rezultat').innerHTML = '⏸️ Așteptăm să înceapă votarea...';
             votareActiva = false;
-            dezactiveazaButoanele();
+            if (typeof dezactiveazaButoanele === 'function') {
+                dezactiveazaButoanele();
+            } else {
+                console.warn('⚠️ dezactiveazaButoanele is not defined yet');
+            }
             return;
         }
 
@@ -614,7 +629,11 @@
 
             if (!aVotat) {
                 document.getElementById('rezultat').innerHTML = '🗳️ Votarea este în curs... Alege-ți echipa preferată!';
-                activeazaButoanele();
+                if (typeof activeazaButoanele === 'function') {
+                    activeazaButoanele();
+                } else {
+                    console.warn('⚠️ activeazaButoanele is not defined yet');
+                }
             } else {
                 document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
                 dezactiveazaButoanele();
@@ -650,7 +669,11 @@
             // Actualizează starea votării și UI-ul în funcție de timpul rămas
             if (remaining <= 0) {
                 votareActiva = false;
-                dezactiveazaButoanele();
+                if (typeof dezactiveazaButoanele === 'function') {
+                    dezactiveazaButoanele();
+                } else {
+                    console.warn('⚠️ dezactiveazaButoanele is not defined yet');
+                }
                 document.getElementById('rezultat').innerHTML = '⏱️ Timpul a expirat! Votarea s-a încheiat.';
                 document.getElementById('countdown-overlay').classList.add('hidden');
                 
