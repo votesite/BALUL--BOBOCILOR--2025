@@ -558,11 +558,17 @@
         }
     });
 
-    // Ascultă timer-ul din Firebase
+    // Ascultă timer-ul din Firebase - actualizare în timp real pentru toți utilizatorii
     timerRef.on('value', (snapshot) => {
         console.log('🕒 Actualizare timer din Firebase');
         const timerData = snapshot.val();
         console.log('🕒 Date timer:', timerData);
+
+        // Oprește orice interval existent pentru a evita conflictele
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
 
         if (!timerData || !timerData.startTime) {
             document.getElementById('timp').textContent = '--:--:--';
@@ -595,67 +601,90 @@
                 dezactiveazaButoanele();
             }
 
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-
-            console.log('🕒 Pornire interval timer local');
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const elapsed = Math.floor((now - startTime) / 1000);
-                const remaining = Math.max(0, duration - elapsed);
-                console.log('⏱️ Timp rămas (secunde):', remaining);
-
-                const hours = Math.floor(remaining / 3600);
-                const minutes = Math.floor((remaining % 3600) / 60);
-                const seconds = remaining % 60;
-                const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                document.getElementById('timp').textContent = timeString;
-
-                if (remaining <= 10 && remaining > 0) {
-                    const overlay = document.getElementById('countdown-overlay');
-                    const countdownNumber = document.getElementById('countdown-number');
-                    const timerDisplay = document.getElementById('timp');
-
-                    overlay.style.display = 'flex';
-                    countdownNumber.textContent = remaining;
-                    timerDisplay.classList.add('final-countdown');
-                } else if (remaining > 10) {
-                    const overlay = document.getElementById('countdown-overlay');
-                    const timerDisplay = document.getElementById('timp');
-                    overlay.style.display = 'none';
-                    timerDisplay.classList.remove('final-countdown');
-                }
-
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                    votareActiva = false;
-
-                    document.getElementById('countdown-overlay').style.display = 'none';
-                    document.getElementById('timp').classList.remove('final-countdown');
-
-                    voturiRef.once('value').then((snapshot) => {
-                        const data = snapshot.val() || {};
-                        afiseazaCastigatorFinal(data);
-                    });
-                }
-            }, 1000);
-        } else {
-            votareActiva = false;
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-
-            voturiRef.once('value').then((snapshot) => {
-                const data = snapshot.val() || {};
-                afiseazaCastigatorFinal(data);
-            });
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
         }
+
+        console.log('🕒 Pornire interval timer local');
+        // Actualizează imediat pentru a evita întârzierea inițială
+        updateTimerDisplay(startTime, duration);
+        
+        // Setează un interval pentru actualizări regulate
+        timerInterval = setInterval(() => {
+            updateTimerDisplay(startTime, duration);
+        }, 1000); // Actualizare la fiecare secundă
+         
+        // Funcție pentru actualizarea afișării timer-ului
+        function updateTimerDisplay(startTime, duration) {
+            const now = Date.now();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const remaining = Math.max(0, duration - elapsed);
+            console.log('⏱️ Timp rămas (secunde):', remaining);
+
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = remaining % 60;
+            const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timp').textContent = timeString;
+            
+            // Actualizează starea votării și UI-ul în funcție de timpul rămas
+            if (remaining <= 0) {
+                votareActiva = false;
+                dezactiveazaButoanele();
+                document.getElementById('rezultat').innerHTML = '⏱️ Timpul a expirat! Votarea s-a încheiat.';
+                document.getElementById('countdown-overlay').classList.add('hidden');
+                
+                // Afișează rezultatele finale
+                setTimeout(() => {
+                    afiseazaCastigatorFinal();
+                }, 1000);
+                
+                // Oprește intervalul
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            if (remaining <= 10 && remaining > 0) {
+                // Arată overlay-ul de countdown
+                const countdownOverlay = document.getElementById('countdown-overlay');
+                const countdownNumber = document.getElementById('countdown-number');
+                const timerDisplay = document.getElementById('timp');
+
+                countdownOverlay.style.display = 'flex';
+                countdownNumber.textContent = remaining;
+                timerDisplay.classList.add('final-countdown');
+                
+                if (remaining <= 3) {
+                    countdownNumber.classList.add('final-countdown');
+                } else {
+                    countdownNumber.classList.remove('final-countdown');
+                }
+            } else if (remaining > 10) {
+                // Ascunde overlay-ul
+                const overlay = document.getElementById('countdown-overlay');
+                const timerDisplay = document.getElementById('timp');
+                overlay.style.display = 'none';
+                timerDisplay.classList.remove('final-countdown');
+            }
+
+            // Acest cod este redundant și a fost mutat mai sus în funcție
+        }
+    } else {
+        votareActiva = false;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        voturiRef.once('value').then((snapshot) => {
+            const data = snapshot.val() || {};
+            afiseazaCastigatorFinal(data);
+        });
+    }
     });
 
+    // Verifică dacă utilizatorul a votat deja și actualizează UI-ul corespunzător
     if (aVotat) {
         document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
         dezactiveazaButoanele();
