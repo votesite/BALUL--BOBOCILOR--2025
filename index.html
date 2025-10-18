@@ -308,12 +308,7 @@
     <button id="welcome-btn">Intră la Votare</button>
     <br>
         <button id="owner-login-btn">🔑 Login Organizator</button>
-        <div id="inlineAuth" style="margin-top:12px;">
-            <input id="authEmail" type="email" placeholder="Email organizator" style="padding:8px; width:220px; border-radius:6px; border:1px solid #ccc; margin-right:6px;" />
-            <input id="authPassword" type="password" placeholder="Parolă" style="padding:8px; width:160px; border-radius:6px; border:1px solid #ccc; margin-right:6px;" />
-            <button id="authSignInBtn" style="padding:8px 12px;">Sign in</button>
-            <button id="authSignOutBtn" style="padding:8px 12px; display:none;">Sign out</button>
-        </div>
+        <!-- inline auth removed; use Login Organizator button (prompt-based) -->
 </div>
 
 <!-- Aplicația principală -->
@@ -460,35 +455,7 @@
             console.log('⚠️ Butonul owner-login-btn nu a fost găsit!');
         }
 
-        // Inline auth UI wiring
-        const authEmail = document.getElementById('authEmail');
-        const authPassword = document.getElementById('authPassword');
-        const authSignInBtn = document.getElementById('authSignInBtn');
-        const authSignOutBtn = document.getElementById('authSignOutBtn');
-
-        if (authSignInBtn) {
-            authSignInBtn.addEventListener('click', function() {
-                const email = authEmail.value;
-                const password = authPassword.value;
-                if (!email || !password) { alert('Introdu email și parolă.'); return; }
-                firebase.auth().signInWithEmailAndPassword(email, password).then(() => {
-                    alert('Autentificare reușită!');
-                }).catch(err => {
-                    console.error('Eroare autentificare:', err);
-                    alert('Eroare autentificare: ' + (err.message || err));
-                });
-            });
-        }
-
-        if (authSignOutBtn) {
-            authSignOutBtn.addEventListener('click', function() {
-                firebase.auth().signOut().then(() => {
-                    alert('Signed out');
-                }).catch(err => {
-                    console.error('Sign out error:', err);
-                });
-            });
-        }
+        // Inline auth removed — using prompt-based Login Organizator for now
 
         const startBtn = document.getElementById('startBtn');
         if (startBtn) {
@@ -571,24 +538,7 @@
         }
     });
 
-    // Toggle inline auth UI elements when auth state changes
-    auth.onAuthStateChanged((user) => {
-        const authEmail = document.getElementById('authEmail');
-        const authPassword = document.getElementById('authPassword');
-        const authSignInBtn = document.getElementById('authSignInBtn');
-        const authSignOutBtn = document.getElementById('authSignOutBtn');
-        if (user) {
-            if (authEmail) authEmail.style.display = 'none';
-            if (authPassword) authPassword.style.display = 'none';
-            if (authSignInBtn) authSignInBtn.style.display = 'none';
-            if (authSignOutBtn) authSignOutBtn.style.display = 'inline-block';
-        } else {
-            if (authEmail) authEmail.style.display = 'inline-block';
-            if (authPassword) authPassword.style.display = 'inline-block';
-            if (authSignInBtn) authSignInBtn.style.display = 'inline-block';
-            if (authSignOutBtn) authSignOutBtn.style.display = 'none';
-        }
-    });
+    // Inline auth UI removed; no DOM toggling needed here.
 
     // server time offset (ms) to approximate authoritative server time on clients
     const offsetRef = database.ref('.info/serverTimeOffset');
