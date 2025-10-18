@@ -398,7 +398,7 @@
     // Funcție pentru logare ca organizator
     function loginAsOwner() {
         console.log('🔑 loginAsOwner() a fost apelată!');
-        
+
         const parola = prompt('🔐 Introdu parola de organizator:');
 
         if (parola === null) {
@@ -415,10 +415,10 @@
         // Salvează statutul de organizator
         esteOrganizator = true;
         localStorage.setItem('esteOrganizator', 'true');
-        
+
         alert('✅ Logare reușită! Bun venit, Organizator!');
         console.log('✅ Logare reușită ca organizator!');
-        
+
         // Pornește aplicația cu privilegii de organizator
         startApp();
     }
@@ -709,12 +709,12 @@
         timerRef.remove().then(() => {
             console.log('✅ Timer-ul a fost resetat!');
             alert('✅ Timer-ul a fost resetat! Poți porni o nouă sesiune de votare.');
-            
+
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
             }
-            
+
             document.getElementById('timp').textContent = '--:--:--';
             document.getElementById('rezultat').innerHTML = '⏸️ Timer resetat. Așteptăm să înceapă o nouă votare...';
             votareActiva = false;
@@ -810,7 +810,8 @@
         });
     }
 
-    function arataRestul() {
+    // Funcție globală pentru a arăta/ascunde restul echipelor
+    window.arataRestul = function() {
         const restul = document.getElementById('restulEchipelor');
         const buton = document.getElementById('maiMultBtn');
         if (restul.style.display === 'none' || restul.style.display === '') {
