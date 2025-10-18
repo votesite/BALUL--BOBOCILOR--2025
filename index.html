@@ -434,7 +434,7 @@
 
     function signInOwnerPrompt() {
         // Prompt simplu pentru parolă locală (nu folosește Firebase Auth)
-        const password = prompt('Introdu parola organizator (local, fără Firebase):');
+        const password = prompt('Introdu parola organizator:');
         if (password === null) return Promise.reject('cancelled');
 
     const ownerPassword = localStorage.getItem('ownerPassword') || 'kd90af6gj7mk';
@@ -1022,3 +1022,4 @@
 </script>
 </body>
 </html>
+
