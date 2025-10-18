@@ -6,7 +6,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f0f0f0;
+            background: #0B0B0B; /* Negru lucios - fundal principal */
+            color: #F5F5F5; /* Alb sidefat pentru text pe fundal întunecat */
             text-align: center;
             padding: 40px;
             margin: 0;
@@ -19,7 +20,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0B0B0B 0%, #0B0B0B 100%); /* păstrăm ecran întunecat */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -29,37 +30,37 @@
         }
 
         #welcome-screen h1 {
-            color: white;
+            color: #B22222; /* Roșu catifelat pentru titlu */
             font-size: 4em;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-shadow: 0 5px 15px rgba(0,0,0,0.6);
             margin-bottom: 50px;
             animation: slideDown 1s ease-out;
         }
 
         #welcome-btn {
-            background: white;
-            color: #667eea;
+            background: #FFD700; /* Auriu metalic pentru buton */
+            color: #0B0B0B; /* text întunecat pe buton auriu */
             border: none;
             padding: 25px 60px;
             font-size: 1.8em;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             transition: all 0.3s ease;
             font-weight: bold;
             animation: slideUp 1s ease-out;
         }
 
         #welcome-btn:hover {
-            transform: scale(1.1) translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-            background: #ffd700;
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+            filter: brightness(0.95);
         }
 
         #owner-login-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid white;
+            background: transparent;
+            color: #F5F5F5;
+            border: 2px solid #FFD700;
             padding: 10px 20px;
             font-size: 1em;
             border-radius: 25px;
@@ -69,8 +70,8 @@
         }
 
         #owner-login-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
+            background: rgba(255,215,0,0.08);
+            transform: scale(1.03);
         }
 
         @keyframes fadeIn {
@@ -115,10 +116,11 @@
         }
 
         h1 {
-            color: #333;
+            color: #B22222; /* roșu pentru titluri */
         }
         .optiune {
-            background: white;
+            background: #0B0B0B;
+            border: 1px solid rgba(255,215,0,0.12);
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             margin: 10px auto;
@@ -126,10 +128,11 @@
             width: 250px;
             cursor: pointer;
             transition: 0.2s;
+            color: #F5F5F5;
         }
         .optiune:hover {
-            background: #d0f0ff;
-            transform: scale(1.05);
+            background: rgba(255,215,0,0.06);
+            transform: scale(1.03);
         }
         #rezultat {
             margin-top: 20px;
@@ -143,91 +146,95 @@
             min-width: 200px;
         }
         .loc1 {
-            background: linear-gradient(135deg, #FFD700, #FFA500);
+            background: linear-gradient(135deg, #FFD700, #E6BE00);
             font-size: 1.3em;
+            color: #0B0B0B;
         }
         .loc2 {
-            background: linear-gradient(135deg, #C0C0C0, #808080);
+            background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
             font-size: 1.2em;
+            color: #F5F5F5;
         }
         .loc3 {
-            background: linear-gradient(135deg, #CD7F32, #8B4513);
+            background: linear-gradient(135deg, #B87333, #8B4513);
             font-size: 1.1em;
+            color: #F5F5F5;
         }
         #maiMultBtn {
-            background: #4CAF50;
-            color: white;
+            background: #FFD700;
+            color: #0B0B0B;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.1em;
-            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 1.0em;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 20px;
-            transition: 0.3s;
+            transition: 0.2s;
         }
         #maiMultBtn:hover {
-            background: #45a049;
-            transform: scale(1.05);
+            filter: brightness(0.95);
+            transform: translateY(-2px);
         }
         #restulEchipelor {
             display: none;
             margin-top: 20px;
-            background: white;
+            background: rgba(255,255,255,0.03);
             padding: 20px;
             border-radius: 10px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
+            color: #F5F5F5;
         }
         .loading {
-            color: #ff6600;
+            color: #FFD700;
             font-size: 1.2em;
         }
         #startBtn {
-            background: #FF6600;
-            color: white;
+            background: #FFD700;
+            color: #0B0B0B;
             border: none;
-            padding: 20px 40px;
-            font-size: 1.3em;
-            border-radius: 15px;
+            padding: 16px 36px;
+            font-size: 1.2em;
+            border-radius: 12px;
             cursor: pointer;
             margin: 20px;
-            transition: 0.3s;
+            transition: 0.2s;
         }
         #startBtn:hover {
-            background: #ff8533;
-            transform: scale(1.05);
+            filter: brightness(0.95);
+            transform: translateY(-2px);
         }
         #resetTimerBtn {
-            background: #ffc107;
-            color: #333;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.1em;
-            border-radius: 10px;
+            background: transparent;
+            color: #FFD700;
+            border: 1px solid rgba(255,215,0,0.25);
+            padding: 12px 24px;
+            font-size: 1.0em;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 10px;
-            transition: 0.3s;
+            transition: 0.2s;
             font-weight: bold;
         }
         #resetTimerBtn:hover {
-            background: #ffca28;
-            transform: scale(1.05);
+            background: rgba(255,215,0,0.04);
+            transform: translateY(-2px);
         }
         #resetBtn {
-            background: #dc3545;
-            color: white;
+            background: #B22222; /* Roșu catifelat pentru acțiuni periculoase */
+            color: #F5F5F5;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.1em;
-            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 1.0em;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 10px;
-            transition: 0.3s;
+            transition: 0.15s;
         }
         #resetBtn:hover {
-            background: #c82333;
-            transform: scale(1.05);
+            filter: brightness(0.95);
+            transform: translateY(-2px);
         }
         #countdown-overlay {
             display: none;
@@ -236,7 +243,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(11,11,11,0.98);
             z-index: 9999;
             justify-content: center;
             align-items: center;
@@ -246,13 +253,13 @@
         #countdown-number {
             font-size: 15em;
             font-weight: bold;
-            color: #ff6600;
-            text-shadow: 0 0 50px #ff6600, 0 0 100px #ff6600;
+            color: #FFD700;
+            text-shadow: 0 0 50px rgba(255,215,0,0.6), 0 0 100px rgba(255,215,0,0.35);
             animation: pulse 1s infinite;
         }
         #countdown-text {
             font-size: 3em;
-            color: white;
+            color: #F5F5F5;
             margin-top: 30px;
             text-transform: uppercase;
             letter-spacing: 10px;
@@ -274,14 +281,14 @@
         }
         .final-countdown {
             animation: shake 0.5s infinite, pulse 1s infinite;
-            color: red !important;
+            color: #B22222 !important; /* roșu catifelat */
             font-size: 3em !important;
         }
 
         .admin-badge {
             display: inline-block;
-            background: #ffd700;
-            color: #333;
+            background: #FFD700;
+            color: #0B0B0B;
             padding: 5px 15px;
             border-radius: 20px;
             font-size: 0.9em;
@@ -291,12 +298,14 @@
         }
 
         #adminControls {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.03);
             padding: 20px;
             border-radius: 15px;
             margin: 20px auto;
             max-width: 500px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+            color: #F5F5F5;
+            border: 1px solid rgba(255,215,0,0.06);
         }
     </style>
 </head>
@@ -1022,4 +1031,3 @@
 </script>
 </body>
 </html>
-
