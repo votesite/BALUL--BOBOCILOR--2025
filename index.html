@@ -335,6 +335,12 @@
         <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
             ⚠️ Aceste butoane necesită parolă de organizator
         </p>
+        <!-- Admin debug: show current session and allow forcing a new session -->
+        <div style="margin-top:10px; text-align:center;">
+            <div style="margin-bottom:6px; color:#333; font-weight:bold;">Session debug</div>
+            <div id="sessionDisplay" style="background:#fff; border-radius:6px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">Curent session: <span id="sessionVal">-</span></div>
+            <button id="forceSessionBtn" style="margin-top:8px; padding:8px 12px; background:#6c757d; color:#fff; border-radius:6px; border:none; cursor:pointer;">⚡ Forțează session</button>
+        </div>
         <p style="margin-top:8px;">
             <a id="firebaseConsoleLink"
                href="https://console.firebase.google.com/project/votes-7e548/database/votes-7e548-default-rtdb/data/~2F"
@@ -528,6 +534,28 @@
             console.log('\u2139\ufe0f User has already voted in this session (local)');
         }
     });
+
+    // Update admin debug display if present
+    const sessionValEl = document.getElementById('sessionVal');
+    const forceBtn = document.getElementById('forceSessionBtn');
+    sessionRef.on('value', (snap) => {
+        try {
+            const s = snap.val();
+            if (sessionValEl) sessionValEl.textContent = s || '-';
+        } catch (e) { /* ignore */ }
+    });
+
+    if (forceBtn) {
+        forceBtn.addEventListener('click', () => {
+            const confirmForce = confirm('Forțezi un nou session token? Toți clienții vor fi deblocați.');
+            if (!confirmForce) return;
+            sessionRef.set(firebase.database.ServerValue.TIMESTAMP).then(() => {
+                alert('Session forțat.');
+            }).catch((err) => {
+                alert('Eroare la forțarea session: ' + err);
+            });
+        });
+    }
 
     let votareActiva = false;
     let aVotat = localStorage.getItem('aVotat') === 'true';
