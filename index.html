@@ -335,6 +335,15 @@
         <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
             ⚠️ Aceste butoane necesită parolă de organizator
         </p>
+        <p style="margin-top:8px;">
+            <a id="firebaseConsoleLink"
+               href="https://console.firebase.google.com/project/votes-7e548/database/votes-7e548-default-rtdb/data/~2F"
+               target="_blank"
+               rel="noopener"
+               style="display:inline-block; padding:8px 12px; background:#4285F4; color:white; border-radius:6px; text-decoration:none; font-weight:bold;">
+               🔗 Deschide Firebase Console
+            </a>
+        </p>
     </div>
 
     <div class="optiune" data-pereche="Mușat Mădălina+Mușat Gelu">Mușat Mădălina+Mușat Gelu</div>
@@ -484,6 +493,14 @@
     const voturiRef = database.ref('voturi');
     const timerRef = database.ref('timer');
 
+    // server time offset (ms) to approximate authoritative server time on clients
+    const offsetRef = database.ref('.info/serverTimeOffset');
+    let serverTimeOffset = 0;
+    offsetRef.on('value', (snap) => {
+        serverTimeOffset = snap.val() || 0;
+        console.log('\u23f1\ufe0f Server time offset (ms):', serverTimeOffset);
+    });
+
     let votareActiva = false;
     let aVotat = localStorage.getItem('aVotat') === 'true';
     let timerInterval = null;
@@ -494,8 +511,9 @@
         const optiuni = document.querySelectorAll('.optiune');
         optiuni.forEach(opt => {
             const pereche = opt.getAttribute('data-pereche');
-            // Adăugăm onclick direct în HTML pentru compatibilitate maximă
-            opt.setAttribute('onclick', `vote('${pereche}')`);
+            // Folosim atribuirea directă la .onclick pentru a evita probleme
+            // cu escaparea și duble bind-uri (setAttribute poate produce HTML cu ghilimele)
+            opt.onclick = function() { window.vote(pereche); };
             console.log(`✅ Event listener atașat pentru: ${pereche}`);
         });
         console.log('✅ Event listeners atașate pe', optiuni.length, 'opțiuni!');
@@ -578,10 +596,11 @@
             return;
         }
 
-        const startTime = timerData.startTime;
-        const duration = timerData.duration || 60;
-        const now = Date.now();
-        const elapsed = Math.floor((now - startTime) / 1000);
+    const startTime = timerData.startTime;
+    const duration = timerData.duration || 60;
+    // Use serverTimeOffset so clients approximate server time
+    const now = Date.now() + (serverTimeOffset || 0);
+    const elapsed = Math.floor((now - startTime) / 1000);
         const remaining = Math.max(0, duration - elapsed);
 
         const hours = Math.floor(remaining / 3600);
@@ -617,7 +636,7 @@
          
         // Funcție pentru actualizarea afișării timer-ului
         function updateTimerDisplay(startTime, duration) {
-            const now = Date.now();
+            const now = Date.now() + (serverTimeOffset || 0);
             const elapsed = Math.floor((now - startTime) / 1000);
             const remaining = Math.max(0, duration - elapsed);
             console.log('⏱️ Timp rămas (secunde):', remaining);
@@ -725,8 +744,9 @@
         const confirmare = confirm('Sigur vrei să pornești votarea? Toată lumea va vedea timer-ul pornind!');
         if (!confirmare) return;
 
+        // Use Firebase server timestamp to ensure all clients have a common reference
         timerRef.set({
-            startTime: Date.now(),
+            startTime: firebase.database.ServerValue.TIMESTAMP,
             duration: 7200
         }).then(() => {
             console.log('✅ Votarea a început!');
