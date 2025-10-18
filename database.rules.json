@@ -1,0 +1,17 @@
+{
+  "rules": {
+    ".read": true,
+    "voturi": {
+      ".read": true,
+      ".write": "auth !== null"
+    },
+    "timer": {
+      ".read": true,
+      ".write": "auth !== null"
+    },
+    "session": {
+      ".read": true,
+      ".write": "auth !== null"
+    }
+  }
+}
