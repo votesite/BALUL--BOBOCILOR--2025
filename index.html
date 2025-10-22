@@ -326,8 +326,8 @@
     <h2 id="welcome-subtitle" role="heading" aria-level="2">E seara în care glam-ul, talentul și atitudinea se întâlnesc pe Covorul Roșu.🤭</h2>
     <button id="welcome-btn">Intră la Votare</button>
     <br>
-    <button id="owner-login-btn">🔑 Login Organizator</button>
-    <!-- inline auth removed; use Login Organizator button (prompt-based) -->
+        <button id="owner-login-btn">🔑 Login Organizator</button>
+            <!-- inline auth removed; use Login Organizator button (prompt-based) -->
 </div>
 
 <!-- Aplicația principală -->
@@ -346,13 +346,13 @@
 
     <!-- Controale Admin - ASCUNSE implicit, vizibile doar pentru organizator -->
     <div id="adminControls" class="hidden">
-        <h3>🔒 Panou Organizator</h3>
-        <div id="adminNotice" style="color:#a33; font-weight:bold; margin-bottom:8px; display:none;">Nu ești autentificat ca organizator. Folosește "Login Organizator" pentru a debloca controalele.</div>
-        <button id="startBtn">🚀 PORNEȘTE VOTAREA (2 ore)</button>
+    <h3>🔒 Panou Organizator</h3>
+    <div id="adminNotice" style="color:#a33; font-weight:bold; margin-bottom:8px; display:none;">Nu ești autentificat ca organizator. Folosește "Login Organizator" pentru a debloca controalele.</div>
+    <button id="startBtn">🚀 PORNEȘTE VOTAREA (2 ore)</button>
         <br>
-        <button id="resetTimerBtn">⏱️ RESETEAZĂ TIMPUL</button>
+    <button id="resetTimerBtn">⏱️ RESETEAZĂ TIMPUL</button>
         <br>
-        <button id="resetBtn">🔄 RESETEAZĂ TOTUL</button>
+    <button id="resetBtn">🔄 RESETEAZĂ TOTUL</button>
         <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
             ⚠️ Aceste butoane necesită parolă de organizator
         </p>
@@ -368,7 +368,7 @@
                target="_blank"
                rel="noopener"
                style="display:inline-block; padding:8px 12px; background:#4285F4; color:white; border-radius:6px; text-decoration:none; font-weight:bold;">
-                🔗 Deschide Firebase Console
+               🔗 Deschide Firebase Console
             </a>
         </p>
     </div>
@@ -393,7 +393,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // NOTE: organizer access is now managed by Firebase Auth and custom claim `admin`.
+    // NOTE: organizer access is now managed by Firebase Auth + custom claim `admin`.
     // Keep local legacy flag for UI continuity but real permission checks use Firebase token claims.
     let esteOrganizator = localStorage.getItem('esteOrganizator') === 'true';
 
@@ -449,29 +449,6 @@
         signInOwnerPrompt().catch(err => {
             console.warn('loginAsOwner failed/canceled:', err);
         });
-        // 🔒 Parola cerută la fiecare acțiune
-        function cereParolaInainteDeActiune(callback) {
-            const parola = prompt("Introdu parola organizator pentru a continua:");
-            const ownerPassword = localStorage.getItem('ownerPassword') || 'kd90af6gj7mk';
-            if (parola === ownerPassword) callback();
-            else alert("❌ Parolă incorectă!");
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnStart = document.getElementById("startBtn");
-            const btnResetTimer = document.getElementById("resetTimerBtn");
-            const btnResetAll = document.getElementById("resetBtn");
-            const btnForceSession = document.getElementById("forceSessionBtn");
-
-            if (btnStart) btnStart.onclick = () => cereParolaInainteDeActiune(startVotare);
-            if (btnResetTimer) btnResetTimer.onclick = () => cereParolaInainteDeActiune(resetTimer);
-            if (btnResetAll) btnResetAll.onclick = () => cereParolaInainteDeActiune(resetVotare);
-            if (btnForceSession) btnForceSession.onclick = () => cereParolaInainteDeActiune(() => {
-                const confirmForce = confirm("Forțezi un nou session token?");
-                if (!confirmForce) return;
-                sessionRef.set(firebase.database.ServerValue.TIMESTAMP).then(() => alert("Session forțat!"));
-            });
-        });
     }
 
     function signInOwnerPrompt() {
@@ -479,7 +456,7 @@
         const password = prompt('Introdu parola organizator:');
         if (password === null) return Promise.reject('cancelled');
 
-        const ownerPassword = localStorage.getItem('ownerPassword') || 'kd90af6gj7mk';
+    const ownerPassword = localStorage.getItem('ownerPassword') || 'kd90af6gj7mk';
         if (password === ownerPassword) {
             localStorage.setItem('esteOrganizator', 'true');
             esteOrganizator = true;
@@ -500,6 +477,45 @@
             alert('Parolă incorectă. Dacă dorești să setezi o parolă locală, rulează în consolă:\nlocalStorage.setItem("ownerPassword","PAROLA_TA")');
             console.warn('❌ Parolă locală incorectă');
             return Promise.reject(new Error('Parolă incorectă'));
+        }
+    }
+
+    // Helper: require organizer password for each admin action
+    // Accepts an async or sync action function and an optional label for the prompt
+    function requireOwnerPassword(actionFn, label) {
+        // Always prompt for password regardless of `esteOrganizator` value
+        const promptText = (label ? (label + '\n') : '') + 'Introdu parola organizator:';
+        const password = prompt(promptText);
+        if (password === null) {
+            console.log('🔒 Action cancelled by user');
+            return;
+        }
+        const ownerPassword = localStorage.getItem('ownerPassword') || 'kd90af6gj7mk';
+        if (password !== ownerPassword) {
+            alert('Parolă incorectă. Acțiunea a fost anulată.');
+            console.warn('❌ Parolă locală incorectă pentru acțiunea admin');
+            return;
+        }
+
+        // mark as organizer locally if not already (optional convenience)
+        if (!esteOrganizator) {
+            localStorage.setItem('esteOrganizator', 'true');
+            esteOrganizator = true;
+            try { document.getElementById('adminBadge').classList.remove('hidden'); document.getElementById('adminControls').classList.remove('hidden'); } catch(e){}
+        }
+
+        try {
+            const result = actionFn();
+            // If the action returns a promise, handle rejections
+            if (result && typeof result.then === 'function') {
+                result.catch(err => {
+                    console.error('❌ Eroare la execuția acțiunii admin:', err);
+                    alert('Eroare la execuția acțiunii: ' + (err && err.message ? err.message : err));
+                });
+            }
+        } catch (err) {
+            console.error('❌ Eroare la execuția acțiunii admin (sync):', err);
+            alert('Eroare la execuția acțiunii: ' + (err && err.message ? err.message : err));
         }
     }
 
@@ -531,20 +547,26 @@
 
         const startBtn = document.getElementById('startBtn');
         if (startBtn) {
-            startBtn.addEventListener('click', startVotare);
-            console.log('✅ Event listener atașat pe butonul de start!');
+            startBtn.addEventListener('click', function() {
+                requireOwnerPassword(startVotare, 'Pornire votare');
+            });
+            console.log('✅ Event listener atașat pe butonul de start (cu prompt)!');
         }
 
         const resetTimerBtn = document.getElementById('resetTimerBtn');
         if (resetTimerBtn) {
-            resetTimerBtn.addEventListener('click', resetTimer);
-            console.log('✅ Event listener atașat pe butonul de reset timer!');
+            resetTimerBtn.addEventListener('click', function() {
+                requireOwnerPassword(resetTimer, 'Resetează timer-ul');
+            });
+            console.log('✅ Event listener atașat pe butonul de reset timer (cu prompt)!');
         }
 
         const resetBtn = document.getElementById('resetBtn');
         if (resetBtn) {
-            resetBtn.addEventListener('click', resetVotare);
-            console.log('✅ Event listener atașat pe butonul de reset!');
+            resetBtn.addEventListener('click', function() {
+                requireOwnerPassword(resetVotare, 'Resetează totul (șterge voturi)');
+            });
+            console.log('✅ Event listener atașat pe butonul de reset (cu prompt)!');
         }
     });
 
@@ -624,18 +646,16 @@
 
     if (forceBtn) {
         forceBtn.addEventListener('click', () => {
-            const confirmForce = confirm('Forțezi un nou session token? Toți clienții vor fi deblocați.');
-            if (!confirmForce) return;
-            // require local organizer flag before forcing session
-            if (!esteOrganizator) {
-                alert('Trebuie să fii autentificat ca organizator pentru a forța session. Folosește Login Organizator.');
-                return;
-            }
-            sessionRef.set(firebase.database.ServerValue.TIMESTAMP).then(() => {
-                alert('Session forțat.');
-            }).catch((err) => {
-                alert('Eroare la forțarea session: ' + (err.message || err));
-            });
+            // Wrap the force session action in password check
+            requireOwnerPassword(() => {
+                const confirmForce = confirm('Forțezi un nou session token? Toți clienții vor fi deblocați.');
+                if (!confirmForce) return;
+                sessionRef.set(firebase.database.ServerValue.TIMESTAMP).then(() => {
+                    alert('Session forțat.');
+                }).catch((err) => {
+                    alert('Eroare la forțarea session: ' + (err.message || err));
+                });
+            }, 'Forțează session nou');
         });
     }
 
@@ -709,7 +729,7 @@
         } else {
             console.log('❌ Deconectat de la Firebase');
             document.getElementById('rezultat').innerHTML = '⚠️ Nu se poate conecta la server... Verifică internetul! <button id="reconnectBtn" style="margin-top: 10px; padding: 8px 15px; background: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 Reconectare</button>';
-
+            
             // Adaugă event listener pentru butonul de reconectare
             setTimeout(() => {
                 const reconnectBtn = document.getElementById('reconnectBtn');
@@ -749,11 +769,11 @@
             return;
         }
 
-        const startTime = timerData.startTime;
-        const duration = timerData.duration || 60;
-        // Use serverTimeOffset so clients approximate server time
-        const now = Date.now() + (serverTimeOffset || 0);
-        const elapsed = Math.floor((now - startTime) / 1000);
+    const startTime = timerData.startTime;
+    const duration = timerData.duration || 60;
+    // Use serverTimeOffset so clients approximate server time
+    const now = Date.now() + (serverTimeOffset || 0);
+    const elapsed = Math.floor((now - startTime) / 1000);
         const remaining = Math.max(0, duration - elapsed);
 
         const hours = Math.floor(remaining / 3600);
@@ -777,91 +797,91 @@
                 dezactiveazaButoanele();
             }
 
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-
-            console.log('🕒 Pornire interval timer local');
-            // Actualizează imediat pentru a evita întârzierea inițială
-            updateTimerDisplay(startTime, duration);
-
-            // Setează un interval pentru actualizări regulate
-            timerInterval = setInterval(() => {
-                updateTimerDisplay(startTime, duration);
-            }, 1000); // Actualizare la fiecare secundă
-
-            // Funcție pentru actualizarea afișării timer-ului
-            function updateTimerDisplay(startTime, duration) {
-                const now = Date.now() + (serverTimeOffset || 0);
-                const elapsed = Math.floor((now - startTime) / 1000);
-                const remaining = Math.max(0, duration - elapsed);
-                console.log('⏱️ Timp rămas (secunde):', remaining);
-
-                const hours = Math.floor(remaining / 3600);
-                const minutes = Math.floor((remaining % 3600) / 60);
-                const seconds = remaining % 60;
-                const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                document.getElementById('timp').textContent = timeString;
-
-                // Actualizează starea votării și UI-ul în funcție de timpul rămas
-                if (remaining <= 0) {
-                    votareActiva = false;
-                    if (typeof dezactiveazaButoanele === 'function') {
-                        dezactiveazaButoanele();
-                    } else {
-                        console.warn('⚠️ dezactiveazaButoanele is not defined yet');
-                    }
-                    document.getElementById('rezultat').innerHTML = '⏱️ Timpul a expirat! Votarea s-a încheiat.';
-                    document.getElementById('countdown-overlay').classList.add('hidden');
-
-                    // Afișează rezultatele finale
-                    setTimeout(() => {
-                        afiseazaCastigatorFinal();
-                    }, 1000);
-
-                    // Oprește intervalul
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
-
-                if (remaining <= 10 && remaining > 0) {
-                    // Arată overlay-ul de countdown
-                    const countdownOverlay = document.getElementById('countdown-overlay');
-                    const countdownNumber = document.getElementById('countdown-number');
-                    const timerDisplay = document.getElementById('timp');
-
-                    countdownOverlay.style.display = 'flex';
-                    countdownNumber.textContent = remaining;
-                    timerDisplay.classList.add('final-countdown');
-
-                    if (remaining <= 3) {
-                        countdownNumber.classList.add('final-countdown');
-                    } else {
-                        countdownNumber.classList.remove('final-countdown');
-                    }
-                } else if (remaining > 10) {
-                    // Ascunde overlay-ul
-                    const overlay = document.getElementById('countdown-overlay');
-                    const timerDisplay = document.getElementById('timp');
-                    overlay.style.display = 'none';
-                    timerDisplay.classList.remove('final-countdown');
-                }
-
-                // Acest cod este redundant și a fost mutat mai sus în funcție
-            }
-        } else {
-            votareActiva = false;
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-
-            voturiRef.once('value').then((snapshot) => {
-                const data = snapshot.val() || {};
-                afiseazaCastigatorFinal(data);
-            });
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
         }
+
+        console.log('🕒 Pornire interval timer local');
+        // Actualizează imediat pentru a evita întârzierea inițială
+        updateTimerDisplay(startTime, duration);
+        
+        // Setează un interval pentru actualizări regulate
+        timerInterval = setInterval(() => {
+            updateTimerDisplay(startTime, duration);
+        }, 1000); // Actualizare la fiecare secundă
+         
+        // Funcție pentru actualizarea afișării timer-ului
+        function updateTimerDisplay(startTime, duration) {
+            const now = Date.now() + (serverTimeOffset || 0);
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const remaining = Math.max(0, duration - elapsed);
+            console.log('⏱️ Timp rămas (secunde):', remaining);
+
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            const seconds = remaining % 60;
+            const timeString = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timp').textContent = timeString;
+            
+            // Actualizează starea votării și UI-ul în funcție de timpul rămas
+            if (remaining <= 0) {
+                votareActiva = false;
+                if (typeof dezactiveazaButoanele === 'function') {
+                    dezactiveazaButoanele();
+                } else {
+                    console.warn('⚠️ dezactiveazaButoanele is not defined yet');
+                }
+                document.getElementById('rezultat').innerHTML = '⏱️ Timpul a expirat! Votarea s-a încheiat.';
+                document.getElementById('countdown-overlay').classList.add('hidden');
+                
+                // Afișează rezultatele finale
+                setTimeout(() => {
+                    afiseazaCastigatorFinal();
+                }, 1000);
+                
+                // Oprește intervalul
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            if (remaining <= 10 && remaining > 0) {
+                // Arată overlay-ul de countdown
+                const countdownOverlay = document.getElementById('countdown-overlay');
+                const countdownNumber = document.getElementById('countdown-number');
+                const timerDisplay = document.getElementById('timp');
+
+                countdownOverlay.style.display = 'flex';
+                countdownNumber.textContent = remaining;
+                timerDisplay.classList.add('final-countdown');
+                
+                if (remaining <= 3) {
+                    countdownNumber.classList.add('final-countdown');
+                } else {
+                    countdownNumber.classList.remove('final-countdown');
+                }
+            } else if (remaining > 10) {
+                // Ascunde overlay-ul
+                const overlay = document.getElementById('countdown-overlay');
+                const timerDisplay = document.getElementById('timp');
+                overlay.style.display = 'none';
+                timerDisplay.classList.remove('final-countdown');
+            }
+
+            // Acest cod este redundant și a fost mutat mai sus în funcție
+        }
+    } else {
+        votareActiva = false;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        voturiRef.once('value').then((snapshot) => {
+            const data = snapshot.val() || {};
+            afiseazaCastigatorFinal(data);
+        });
+    }
     });
 
     // Verifică dacă utilizatorul a votat deja și actualizează UI-ul corespunzător
@@ -974,7 +994,7 @@
     // Funcție globală pentru votare
     window.vote = function(pereche) {
         console.log('🗳️ Funcția vote() a fost apelată pentru:', pereche);
-
+        
         if (!votareActiva) {
             alert('⏰ Votarea nu este activă! Așteaptă să înceapă.');
             console.log('❌ Votare inactivă');
