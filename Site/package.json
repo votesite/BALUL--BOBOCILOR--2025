@@ -1,8 +1,0 @@
-{
-  "name": "vot-online",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "deploy:functions": "firebase deploy --only functions"
-  }
-}
