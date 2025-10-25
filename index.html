@@ -330,28 +330,6 @@
             <!-- inline auth removed; use Login Organizator button (prompt-based) -->
 </div>
 
-<!-- Ecran verificare telefon -->
-<div id="phone-verification" class="hidden">
-    <h1>🔐 Verificare Telefon</h1>
-    <p>Introdu numărul tău de telefon pentru a primi un cod unic de votare.</p>
-
-    <input id="verify-phone-input" type="tel" placeholder="Număr de telefon (ex: +407XXYYYZZZ)" style="padding:10px; width:100%; max-width:400px; margin:8px 0;" />
-
-    <div style="text-align:left; margin:8px auto; max-width:400px;">
-        <input type="checkbox" id="verify-terms-checkbox" /> <label for="verify-terms-checkbox" style="font-size:0.9em; color:#ddd;">TERMENI ȘI CONDIȚII — Verificare și stocare număr de telefon pentru vot</label>
-        <div style="font-size:0.8em; color:#aaa; margin-top:6px;">Prin introducerea numărului de telefon, confirmi folosirea acestuia pentru validarea votului. Datele sunt păstrate doar pentru a preveni voturile multiple. Poți cere ștergerea datelor contactând [email/contact]. Codul SMS expiră în 10 minute.</div>
-    </div>
-
-    <button id="request-verify-otp-btn" style="margin-top:10px; padding:10px 18px; background:#FFD700; color:#000; border:none; border-radius:8px; cursor:pointer;">Trimite cod</button>
-
-    <div id="verify-otp-section" style="display:none; margin-top:12px;">
-        <input id="verify-otp-input" type="text" placeholder="Introdu codul primit" style="padding:10px; width:100%; max-width:260px;" />
-        <button id="verify-otp-btn" style="padding:8px 14px; margin-left:8px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer;">Verifică cod</button>
-    </div>
-
-    <div id="verify-msg" style="margin-top:12px; font-weight:bold; color:#FFD700;"></div>
-</div>
-
 <!-- Aplicația principală -->
 <div id="main-app" class="hidden">
     <h1>🎉 Votează pentru cea mai bună alegere! 🎉 <span id="adminBadge" class="admin-badge hidden">🔑 ORGANIZATOR</span></h1>
@@ -407,7 +385,6 @@
     <div class="optiune" data-pereche="Alexandra Pene+Plesca Alex">Alexandra Pene+Plesca Alex</div>
     <div class="optiune" data-pereche="Fluture Lorena+Ionuț">Fluture Lorena+Ionuț</div>
 
-
     <p id="rezultat" class="loading">Se conectează la server...</p>
 </div>
 
@@ -424,14 +401,14 @@
     function startApp() {
         console.log('🚀 startApp() a fost apelată!');
         const welcomeScreen = document.getElementById('welcome-screen');
-        const phoneVerification = document.getElementById('phone-verification');
+        const mainApp = document.getElementById('main-app');
 
         // Animație de dispariție pentru ecranul de bun venit
         welcomeScreen.style.animation = 'fadeOut 0.5s ease-out';
 
         setTimeout(() => {
             welcomeScreen.classList.add('hidden');
-            phoneVerification.classList.remove('hidden');
+            mainApp.classList.remove('hidden');
 
             // Verifică dacă localStorage are statutul de organizator
             const isOrganizator = localStorage.getItem('esteOrganizator') === 'true';
@@ -461,21 +438,6 @@
             }
 
             console.log('✅ Tranziția completă!');
-        }, 500);
-    }
-
-    // Funcție pentru a trece la aplicația principală după verificare
-    function showMainApp() {
-        console.log('📱 showMainApp() a fost apelată!');
-        const phoneVerification = document.getElementById('phone-verification');
-        const mainApp = document.getElementById('main-app');
-
-        phoneVerification.style.animation = 'fadeOut 0.5s ease-out';
-
-        setTimeout(() => {
-            phoneVerification.classList.add('hidden');
-            mainApp.classList.remove('hidden');
-            console.log('✅ Tranziția la main app completă!');
         }, 500);
     }
 
@@ -605,108 +567,6 @@
                 requireOwnerPassword(resetVotare, 'Resetează totul (șterge voturi)');
             });
             console.log('✅ Event listener atașat pe butonul de reset (cu prompt)!');
-        }
-
-        // --- Phone verification UI wiring ---
-        const verifyPhoneInput = document.getElementById('verify-phone-input');
-        const verifyTermsCheckbox = document.getElementById('verify-terms-checkbox');
-        const requestVerifyOtpBtn = document.getElementById('request-verify-otp-btn');
-        const verifyOtpSection = document.getElementById('verify-otp-section');
-        const verifyOtpInput = document.getElementById('verify-otp-input');
-        const verifyOtpBtn = document.getElementById('verify-otp-btn');
-        const verifyMsg = document.getElementById('verify-msg');
-
-        function setVerifyMsg(text, color) {
-            if (!verifyMsg) return;
-            verifyMsg.textContent = text || '';
-            verifyMsg.style.color = color || '#FFD700';
-        }
-
-        // Determine API base: use emulator URL when testing on localhost
-        const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://localhost:5001/votes-7e548/us-central1/api'
-            : '/api';
-
-        if (requestVerifyOtpBtn) {
-            requestVerifyOtpBtn.addEventListener('click', async function () {
-                const phone = (verifyPhoneInput && verifyPhoneInput.value || '').trim();
-                if (!phone) { setVerifyMsg('Introduceţi un număr de telefon.', '#ff6600'); return; }
-                if (!verifyTermsCheckbox || !verifyTermsCheckbox.checked) { setVerifyMsg('Trebuie să accepţi termenii şi condiţiile.', '#ff6600'); return; }
-
-                setVerifyMsg('Trimitem codul...', '#FFD700');
-                requestVerifyOtpBtn.disabled = true;
-                try {
-                    const res = await fetch(`${API_BASE}/requestOtp`, {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({ phone })
-                    });
-                    const data = await res.json();
-                    if (data.alreadyVoted) {
-                        setVerifyMsg('⚠️ Ai votat deja cu acest număr de telefon.', '#ff3333');
-                        requestVerifyOtpBtn.disabled = true;
-                        return;
-                    }
-                    if (data.error === 'rate_limit') {
-                        setVerifyMsg('Ai cerut codul prea des. Încearcă mai târziu.', '#ff6600');
-                        requestVerifyOtpBtn.disabled = false;
-                        return;
-                    }
-                    if (data.ok) {
-                        setVerifyMsg('Codul a fost trimis!', '#66cc66');
-                        verifyOtpSection.style.display = 'block';
-                        verifyOtpInput && verifyOtpInput.focus();
-                    } else {
-                        setVerifyMsg(data.message || 'Eroare la trimiterea codului.', '#ff6600');
-                        requestVerifyOtpBtn.disabled = false;
-                    }
-                } catch (e) {
-                    console.error('Error requesting OTP', e);
-                    setVerifyMsg('Eroare la trimiterea codului.', '#ff6600');
-                    requestVerifyOtpBtn.disabled = false;
-                }
-            });
-        }
-
-        if (verifyOtpBtn) {
-            verifyOtpBtn.addEventListener('click', async function () {
-                const phone = (verifyPhoneInput && verifyPhoneInput.value || '').trim();
-                const otp = (verifyOtpInput && verifyOtpInput.value || '').trim();
-                if (!otp) { setVerifyMsg('Introdu codul primit.', '#ff6600'); return; }
-                setVerifyMsg('Verificăm codul...', '#FFD700');
-                verifyOtpBtn.disabled = true;
-                try {
-                    const res = await fetch(`${API_BASE}/verifyOtp`, {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({ phone, otp })
-                    });
-                    const data = await res.json();
-                    if (data.alreadyVoted) {
-                        setVerifyMsg('⚠️ Ai votat deja cu acest număr de telefon.', '#ff3333');
-                        requestVerifyOtpBtn.disabled = true;
-                        verifyOtpBtn.disabled = false;
-                        return;
-                    }
-                    if (data.ok) {
-                        setVerifyMsg('✅ Verificare reușită! Accesând votarea...', '#66cc66');
-                        // Store verified phone
-                        localStorage.setItem('verifiedPhone', phone);
-                        // Proceed to main app
-                        setTimeout(() => {
-                            showMainApp();
-                        }, 1000);
-                    } else if (data.error === 'invalid_or_expired') {
-                        setVerifyMsg('Cod greșit sau expirat.', '#ff6600');
-                        verifyOtpBtn.disabled = false;
-                    } else {
-                        setVerifyMsg(data.message || 'Eroare la verificare.', '#ff6600');
-                        verifyOtpBtn.disabled = false;
-                    }
-                } catch (e) {
-                    console.error('Error verifying OTP', e);
-                    setVerifyMsg('Eroare la verificare.', '#ff6600');
-                    verifyOtpBtn.disabled = false;
-                }
-            });
         }
     });
 
@@ -1111,25 +971,13 @@
         const confirmare2 = confirm('Ultima confirmare! Vrei cu adevărat să ștergi totul?');
         if (!confirmare2) return;
 
-        // First, call API to reset votes and verifications
-        fetch(`${API_BASE}/resetVotes`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ ownerPassword: localStorage.getItem('ownerPassword') || 'kd90af6gj7mk' })
-        }).then(res => res.json()).then(apiData => {
-            if (!apiData.ok) {
-                throw new Error(apiData.message || 'API reset failed');
-            }
-            console.log('✅ API reset successful');
-            // Now reset Firebase Realtime Database
-            return Promise.all([
-                voturiRef.remove().catch(e => { console.error('Eroare la ștergerea voturilor:', e); }),
-                timerRef.remove().catch(e => { console.error('Eroare la ștergerea timer-ului:', e); }),
-                sessionRef.set(firebase.database.ServerValue.TIMESTAMP).catch(e => { console.error('Eroare la actualizarea session:', e); })
-            ]);
-        }).then(() => {
+        Promise.all([
+            voturiRef.remove().catch(e => { console.error('Eroare la ștergerea voturilor:', e); }),
+            timerRef.remove().catch(e => { console.error('Eroare la ștergerea timer-ului:', e); }),
+            sessionRef.set(firebase.database.ServerValue.TIMESTAMP).catch(e => { console.error('Eroare la actualizarea session:', e); })
+        ]).then(() => {
             // Șterge statutul de vot din localStorage - acum utilizatorii pot vota din nou!
             localStorage.removeItem('aVotat');
-            localStorage.removeItem('verifiedPhone');
             aVotat = false;
 
             alert('✅ Totul a fost resetat! Toți utilizatorii pot vota din nou. Pagina se va reîncărca.');
@@ -1144,9 +992,9 @@
     }
 
     // Funcție globală pentru votare
-    window.vote = async function(pereche) {
+    window.vote = function(pereche) {
         console.log('🗳️ Funcția vote() a fost apelată pentru:', pereche);
-
+        
         if (!votareActiva) {
             alert('⏰ Votarea nu este activă! Așteaptă să înceapă.');
             console.log('❌ Votare inactivă');
@@ -1159,52 +1007,26 @@
             return;
         }
 
-        const verifiedPhone = localStorage.getItem('verifiedPhone');
-        if (!verifiedPhone) {
-            alert('❌ Număr de telefon neverificat! Te rugăm să reîncarci pagina și să verifici numărul.');
-            console.log('❌ Telefon neverificat');
-            return;
-        }
-
         console.log('✅ Procesare vot pentru:', pereche);
-        document.getElementById('rezultat').innerHTML = '⏳ Înregistrăm votul tău...';
+        const perecheKey = pereche.replace(/[.#$[\]]/g, '_');
+        const perecheRef = database.ref('voturi/' + perecheKey);
 
-        try {
-            const res = await fetch(`${API_BASE}/vote`, {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ phone: verifiedPhone, participantId: pereche })
-            });
-            const data = await res.json();
+        perecheRef.transaction((currentValue) => {
+            return (currentValue || 0) + 1;
+        }).then(() => {
+            console.log('✅ Vot salvat în Firebase!');
+            aVotat = true;
+            localStorage.setItem('aVotat', 'true');
+            // record which session the user voted in
+            const sess = window.currentSession || Date.now();
+            localStorage.setItem('votedSession', sess);
 
-            if (data.alreadyVoted) {
-                alert('⚠️ Ai votat deja cu acest număr de telefon!');
-                aVotat = true;
-                localStorage.setItem('aVotat', 'true');
-                document.getElementById('rezultat').innerHTML = '✅ Ai votat deja! Așteptăm rezultatele...';
-                if (typeof dezactiveazaButoanele === 'function') dezactiveazaButoanele();
-                return;
-            }
-
-            if (data.ok) {
-                console.log('✅ Vot salvat în Firebase!');
-                aVotat = true;
-                localStorage.setItem('aVotat', 'true');
-                // record which session the user voted in
-                const sess = window.currentSession || Date.now();
-                localStorage.setItem('votedSession', sess);
-
-                document.getElementById('rezultat').innerHTML = '✅ Votul tău a fost înregistrat cu succes!<br>Nu mai poți vota din nou.';
-                if (typeof dezactiveazaButoanele === 'function') dezactiveazaButoanele();
-            } else {
-                console.error('❌ Eroare la salvarea votului:', data.message);
-                alert('Eroare la înregistrarea votului: ' + (data.message || 'Încearcă din nou!'));
-                document.getElementById('rezultat').innerHTML = '❌ Eroare la înregistrarea votului. Încearcă din nou!';
-            }
-        } catch (error) {
+            document.getElementById('rezultat').innerHTML = '✅ Votul tău a fost înregistrat cu succes!<br>Nu mai poți vota din nou.';
+            if (typeof dezactiveazaButoanele === 'function') dezactiveazaButoanele();
+        }).catch((error) => {
             console.error('❌ Eroare la salvarea votului:', error);
             alert('Eroare la înregistrarea votului. Încearcă din nou!');
-            document.getElementById('rezultat').innerHTML = '❌ Eroare la înregistrarea votului. Încearcă din nou!';
-        }
+        });
     }
 
     // Funcție globală pentru a arăta/ascunde restul echipelor
